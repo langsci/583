@@ -1,0 +1,68 @@
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+
+
+\newcount\contourmarkcount
+\newdimen\contourraise
+
+{\catcode`\|=13
+\gdef\installbarmark#1\ignorespaces{%
+    #1\ignorespaces%
+    \catcode`\|=13%
+    \global\contourmarkcount=0\relax%
+    \global\def\lastmarkshift{0}%
+    \let|=\marktext}%
+}
+
+
+\def\star{*}
+\newcommand\marktext[1][*]{%
+    \def\markshift{#1}%
+    % When not followed by the optional argument
+    % the contour mark is set at the previous height.
+    \ifx\markshift\star
+        \let\markshift=\lastmarkshift%
+    \fi
+    \global\advance\contourmarkcount by1\relax%
+    \xdef\tmpmark{\the\contourmarkcount}%
+    \tikz[remember picture, overlay, y=\pgfkeysvalueof{/tikz/contour scale}]
+        \path [yshift=\contourraise, shift={(0,\markshift)}]
+                coordinate (\contourmarkprefix-\tmpmark);%
+    \global\contourmarkcount=\tmpmark\relax% 
+    \global\let\lastmarkshift=\markshift%
+}
+
+
+\tikzset{
+    intonation contour/.style={%
+        execute at begin node={%
+            \installbarmark%
+        },
+        append after command={%
+            \pgfextra{%
+                \ifnum\contourmarkcount>1
+                    \draw [contour] (\contourmarkprefix-1)
+                        \foreach \y in {2,...,\the\contourmarkcount}{ -- (\contourmarkprefix-\y) };
+                \fi
+            }
+        }
+    },
+    % How far above the base line of the text,
+    raise contour/.code=\pgfmathsetlength\contourraise{#1},
+    % The `scale' for the values in the contour height specification
+    contour scale/.initial=3pt,
+    % The prefix for the contour marks.
+    contour mark prefix/.code=\xdef\contourmarkprefix{#1},
+    contour mark prefix=intonation contour,
+    contour/.style={
+        draw, 
+        rounded corners=1ex,
+    }           
+}
+
+\newcommand{\textelp}{(...)}
+
+\renewcommand{\textlongs}{ſ}
+
+\newcommand{\enquote}[1]{\glqq#1\grqq}
+
+
